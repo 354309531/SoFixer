@@ -47,3 +47,5 @@ TK so修复参考[http://bbs.pediy.com/thread-191649.htm]
 ## 已知问题
 在解析重定位表的时候有几个地方写错了，暂时懒得改，估计够用了，等出现新的修复so的
 理论的时候再一并更新吧
+
+参考https://github.com/Chenyangming9/SoFixer，尝试修复了一下重定位表
