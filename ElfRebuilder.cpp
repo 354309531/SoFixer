@@ -751,8 +751,9 @@ void ElfRebuilder::relocate(uint8_t * base, Elf_Rel* rel, Elf_Addr dump_base) {
         case R_ARM_RELATIVE:
             *prel = *prel - dump_base;
             break;
-        case 0x401:
-        case 0x402:{
+       // case R_AARCH64_GLOB_DAT: // GOT
+        case R_AARCH64_JUMP_SLOT: // PLT
+        {
             auto syminfo = si.symtab[sym];
             const char* symname = si.strtab + syminfo.st_name;
             if (syminfo.st_value != 0) {
@@ -768,8 +769,14 @@ void ElfRebuilder::relocate(uint8_t * base, Elf_Rel* rel, Elf_Addr dump_base) {
                     int nIndex = GetIndexOfImports(symname);
                     if (nIndex != -1){
                         *prel = load_size + nIndex*sizeof(*prel);
+                        external_pointer = nIndex*sizeof(*prel);
                     }
-                    // FLOGD("0x%x type:0x%x offset:0x%x -- symname:%s nIndex:%d\r\n", load_size,type, rel->r_offset, symname, nIndex);
+                    else{
+                        // 没找到符号
+                        *prel = load_size + external_pointer;
+                        external_pointer += sizeof(*prel);
+                    }
+                     FLOGD("type:0x%x offset:0x%x -- symname:%s nIndex:%d\r\n",type, rel->r_offset, symname, nIndex);
                 }
             }
             break;
@@ -780,14 +787,14 @@ void ElfRebuilder::relocate(uint8_t * base, Elf_Rel* rel, Elf_Addr dump_base) {
     if (isRela){
         Elf_Rela* rela = (Elf_Rela*)rel;
         switch (type){
-            case 0x403:
+            case R_AARCH64_RELATIVE:
                 *prel = rela->r_addend;
                 break;
             default:
                 break;
         }
     }
-};
+}
 
 int ElfRebuilder::GetIndexOfImports(std::string stringSymName){
   int nIndex = 0;
@@ -808,14 +815,14 @@ void ElfRebuilder::SaveImportsymNames(){
   const char* strtab = si.strtab;
   int nIndex = 0;
   bool start = false;
-  while (nIndex < si.plt_rela_count){
+  while (nIndex < si.plt_rel_count){
     Elf_Sym sym = symtab[nIndex];
-    //FLOGD("sym.st_name= %d %d %d",sym.st_name,sym.st_value,sym.st_info);
+    FLOGD("sym.st_name= %d %d %d",sym.st_name,sym.st_value,sym.st_info);
     if ((sym.st_name == 0 && !start) ||(sym.st_name >= si.strtabsize)){
       nIndex++;
       continue;
     }
-    if((sym.st_info != 0x12 && sym.st_info != 0x11 )|| sym.st_value!=0) {
+    if((sym.st_info != 0x12 && sym.st_info != 0x11 && sym.st_info != 0x22)|| sym.st_value!=0) {
         nIndex++;
         // 过滤
         continue;
@@ -823,7 +830,7 @@ void ElfRebuilder::SaveImportsymNames(){
     start = true;
     const char* symname = strtab + sym.st_name;
     mImports.push_back(symname);
-    // FLOGD("NO:%d %s \r\n", nIndex, symname);
+     FLOGD("NO:%d %s \r\n", mImports.size()-1, symname);
     nIndex++;
   }
 }
@@ -861,7 +868,3 @@ bool ElfRebuilder::RebuildRelocs() {
     FLOGD("=======================RebuildRelocs End=======================");
     return true;
 }
-
-
-
-
