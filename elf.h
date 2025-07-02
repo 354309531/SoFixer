@@ -1829,7 +1829,6 @@ typedef Elf32_Addr Elf32_Conflict;
 /* ARM-specific program header flags */
 #define PF_ARM_SB          0x10000000   /* Segment contains the location
 					   addressed by the static base */
-
 /* ARM relocs.  */
 #define R_ARM_NONE		0	/* No reloc */
 #define R_ARM_PC24		1	/* PC relative 26 bit branch */
@@ -1875,6 +1874,10 @@ typedef Elf32_Addr Elf32_Conflict;
 #define R_ARM_RBASE		255
 /* Keep this the last entry.  */
 #define R_ARM_NUM		256
+
+#define R_AARCH64_GLOB_DAT     1025	/* Create GOT entry.  */
+#define R_AARCH64_JUMP_SLOT    1026	/* Create PLT entry.  */
+#define R_AARCH64_RELATIVE     1027	/* Adjust by program base.  */
 
 /* IA-64 specific declarations.  */
 
